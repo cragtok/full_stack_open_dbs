@@ -2,7 +2,7 @@ const { Model, DataTypes } = require("sequelize");
 
 const { sequelize } = require("../util/db");
 
-class User extends Model { }
+class User extends Model {}
 
 User.init(
     {
@@ -15,6 +15,9 @@ User.init(
             type: DataTypes.STRING,
             unique: true,
             allowNull: false,
+            validate: {
+                isEmail: true,
+            },
         },
         name: {
             type: DataTypes.STRING,
