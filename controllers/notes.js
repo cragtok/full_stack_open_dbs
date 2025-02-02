@@ -1,7 +1,8 @@
 const router = require("express").Router();
 
-const { Note } = require("../models");
-const { ValidationError } = require("sequelize");
+const { Note, User } = require("../models");
+const { ValidationError, where } = require("sequelize");
+const { tokenExtractor } = require("../util/middleware");
 
 const noteFinder = async (req, res, next) => {
     req.note = await Note.findByPk(req.params.id);
@@ -9,12 +10,23 @@ const noteFinder = async (req, res, next) => {
 };
 
 router.get("/", async (req, res) => {
-    const notes = await Note.findAll();
+    const notes = await Note.findAll({
+        attributes: { exclude: ["userId"] },
+        include: {
+            model: User,
+            attributes: ["name"],
+        },
+    });
     return res.json(notes);
 });
 
-router.post("/", async (req, res) => {
-    const note = await Note.create(req.body);
+router.post("/", tokenExtractor, async (req, res) => {
+    const user = await User.findByPk(req.decodedToken.id);
+    const note = await Note.create({
+        ...req.body,
+        userId: user.id,
+        date: new Date(),
+    });
     return res.json(note);
 });
 

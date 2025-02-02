@@ -1,3 +1,6 @@
+const jwt = require("jsonwebtoken");
+const { SECRET } = require("../util/config");
+
 const unknownEndpoint = (req, res) => {
     res.status(404).send({ error: `Unknown endpoint: ${req.url}` });
 };
@@ -17,6 +20,15 @@ const errorHandler = (error, req, res, next) => {
         } else {
             errorMessage = "Malformatted id";
         }
+    } else if (error.name === "SequelizeUniqueConstraintError") {
+        if (
+            req.path.startsWith("/api/users") &&
+            (req.method === "POST" || req.method === "PUT")
+        ) {
+            errorMessage = "Username already exists";
+        }
+    } else if (error.name === "JsonWebTokenError") {
+        errorMessage = "token invalid";
     }
     res.status(400).send({ error: errorMessage });
 
@@ -31,4 +43,19 @@ const requestLogger = (request, response, next) => {
     next();
 };
 
-module.exports = { unknownEndpoint, errorHandler, requestLogger };
+const tokenExtractor = (req, res, next) => {
+    const authorization = req.get("authorization");
+    if (authorization && authorization.toLowerCase().startsWith("bearer ")) {
+        req.decodedToken = jwt.verify(authorization.substring(7), SECRET);
+    } else {
+        return res.status(401).json({ error: "token missing" });
+    }
+    next();
+};
+
+module.exports = {
+    unknownEndpoint,
+    errorHandler,
+    requestLogger,
+    tokenExtractor,
+};
