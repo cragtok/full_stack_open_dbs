@@ -1,7 +1,7 @@
 const router = require("express").Router();
 
 const { Note, User } = require("../models");
-const { ValidationError, where } = require("sequelize");
+const { ValidationError, Op } = require("sequelize");
 const { tokenExtractor } = require("../util/middleware");
 
 const noteFinder = async (req, res, next) => {
@@ -10,13 +10,27 @@ const noteFinder = async (req, res, next) => {
 };
 
 router.get("/", async (req, res) => {
+    const where = {};
+
+    if (req.query.important) {
+        where.important = req.query.important === "true";
+    }
+
+    if (req.query.search) {
+        where.content = {
+            [Op.substring]: req.query.search,
+        };
+    }
+
     const notes = await Note.findAll({
         attributes: { exclude: ["userId"] },
         include: {
             model: User,
             attributes: ["name"],
         },
+        where,
     });
+
     return res.json(notes);
 });
 
@@ -38,9 +52,13 @@ router.get("/:id", noteFinder, async (req, res) => {
     return res.status(404).end();
 });
 
-router.delete("/:id", noteFinder, async (req, res) => {
+router.delete("/:id", tokenExtractor, noteFinder, async (req, res) => {
+    const user = await User.findByPk(req.decodedToken.id);
     const note = req.note;
     if (note) {
+        if (!user || note.userId !== user.id) {
+            return res.status(401).end();
+        }
         await req.note.destroy();
         return res.status(204).end();
     }
