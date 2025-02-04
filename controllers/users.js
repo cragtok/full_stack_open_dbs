@@ -1,13 +1,19 @@
 const router = require("express").Router();
-const { User, Note } = require("../models");
+const { User, Note, Blog } = require("../models");
 const { tokenExtractor } = require("../util/middleware");
 
 router.get("/", async (req, res) => {
     const users = await User.findAll({
-        include: {
-            model: Note,
-            attributes: { exclude: ["userId"] },
-        },
+        include: [
+            {
+                model: Note,
+                attributes: { exclude: ["userId"] },
+            },
+            {
+                model: Blog,
+                attributes: { exclude: ["userId"] },
+            },
+        ],
     });
     return res.json(users);
 });
@@ -19,10 +25,16 @@ router.post("/", async (req, res) => {
 
 router.get("/:id", async (req, res) => {
     const user = await User.findByPk(req.params.id, {
-        include: {
-            model: Note,
-            attributes: { exclude: ["userId"] },
-        },
+        include: [
+            {
+                model: Note,
+                attributes: { exclude: ["userId"] },
+            },
+            {
+                model: Blog,
+                attributes: { exclude: ["userId"] },
+            },
+        ],
     });
     if (user) {
         return res.json(user);
