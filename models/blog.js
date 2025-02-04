@@ -12,7 +12,7 @@ Blog.init(
         title: { type: DataTypes.TEXT, allowNull: false },
         likes: { type: DataTypes.INTEGER, defaultValue: 0 },
     },
-    { sequelize, underscored: true, timestamps: false, modelName: "blog" }
+    { sequelize, underscored: true, timestamps: true, modelName: "blog" }
 );
 
 module.exports = Blog;
