@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { User, Note, Blog } = require("../models");
+const { User, Note, Blog, Team } = require("../models");
 const { tokenExtractor } = require("../util/middleware");
 
 const isAdmin = async (req, res, next) => {
@@ -18,8 +18,22 @@ router.get("/", async (req, res) => {
                 attributes: { exclude: ["userId"] },
             },
             {
+                model: Note,
+                as: "marked_notes",
+                attributes: { exclude: ["userId"] },
+                through: {
+                    attributes: [],
+                },
+                include: { model: User, attributes: ["name"] },
+            },
+            {
                 model: Blog,
                 attributes: { exclude: ["userId"] },
+            },
+            {
+                model: Team,
+                attributes: ["name", "id"],
+                through: { attributes: [] },
             },
         ],
     });
@@ -39,8 +53,22 @@ router.get("/:id", async (req, res) => {
                 attributes: { exclude: ["userId"] },
             },
             {
+                model: Note,
+                as: "marked_notes",
+                attributes: { exclude: ["userId"] },
+                through: {
+                    attributes: [],
+                },
+                include: { model: User, attributes: ["name"] },
+            },
+            {
                 model: Blog,
                 attributes: { exclude: ["userId"] },
+            },
+            {
+                model: Team,
+                attributes: ["name", "id"],
+                through: { attributes: [] },
             },
         ],
     });

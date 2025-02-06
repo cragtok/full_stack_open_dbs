@@ -65,11 +65,15 @@ router.delete("/:id", tokenExtractor, noteFinder, async (req, res) => {
     return res.status(404).end();
 });
 
-router.put("/:id", noteFinder, async (req, res) => {
+router.put("/:id", tokenExtractor, noteFinder, async (req, res) => {
+    const user = await User.findByPk(req.decodedToken.id);
     const note = req.note;
     if (note) {
         if (req.body.important == undefined) {
             throw new ValidationError();
+        }
+        if (!user || note.userId !== user.id) {
+            return res.status(401).end();
         }
         note.important = req.body.important;
         const savedNote = await note.save();
