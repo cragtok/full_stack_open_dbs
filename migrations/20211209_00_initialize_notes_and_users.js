@@ -54,23 +54,23 @@ module.exports = {
         await queryInterface.addColumn("users", "created_at", {
             type: DataTypes.DATE,
             allowNull: false,
-            defaulValue: DataTypes.NOW,
+            defaultValue: DataTypes.NOW,
         });
         await queryInterface.addColumn("blogs", "created_at", {
             type: DataTypes.DATE,
             allowNull: false,
-            defaulValue: DataTypes.NOW,
+            defaultValue: DataTypes.NOW,
         });
 
         await queryInterface.addColumn("users", "updated_at", {
             type: DataTypes.DATE,
             allowNull: false,
-            defaulValue: DataTypes.NOW,
+            defaultValue: DataTypes.NOW,
         });
         await queryInterface.addColumn("blogs", "updated_at", {
             type: DataTypes.DATE,
             allowNull: false,
-            defaulValue: DataTypes.NOW,
+            defaultValue: DataTypes.NOW,
         });
 
         await queryInterface.addColumn("notes", "user_id", {
