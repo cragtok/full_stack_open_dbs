@@ -31,4 +31,20 @@ router.post("/", tokenExtractor, async (req, res) => {
     return res.json(readingList);
 });
 
+router.put("/:id", tokenExtractor, async (req, res) => {
+    const user = await User.findByPk(req.decodedToken.id);
+    const readingList = await ReadingList.findByPk(req.params.id);
+
+    if (readingList) {
+        if (!user || readingList.userId !== user.id) {
+            return res.status(401).end();
+        }
+        readingList.read = req.body.read;
+        const savedReadingList = await readingList.save();
+        return res.json(savedReadingList);
+    }
+
+    return res.status(404).end();
+});
+
 module.exports = router;
