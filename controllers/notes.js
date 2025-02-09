@@ -2,7 +2,7 @@ const router = require("express").Router();
 
 const { Note, User } = require("../models");
 const { ValidationError, Op } = require("sequelize");
-const { tokenExtractor } = require("../util/middleware");
+const { tokenExtractor, checkTokenValidity } = require("../util/middleware");
 
 const noteFinder = async (req, res, next) => {
     req.note = await Note.findByPk(req.params.id);
@@ -34,7 +34,7 @@ router.get("/", async (req, res) => {
     return res.json(notes);
 });
 
-router.post("/", tokenExtractor, async (req, res) => {
+router.post("/", tokenExtractor, checkTokenValidity, async (req, res) => {
     const user = await User.findByPk(req.decodedToken.id);
     const note = await Note.create({
         ...req.body,
@@ -52,34 +52,46 @@ router.get("/:id", noteFinder, async (req, res) => {
     return res.status(404).end();
 });
 
-router.delete("/:id", tokenExtractor, noteFinder, async (req, res) => {
-    const user = await User.findByPk(req.decodedToken.id);
-    const note = req.note;
-    if (note) {
-        if (!user || note.userId !== user.id) {
-            return res.status(401).end();
+router.delete(
+    "/:id",
+    tokenExtractor,
+    checkTokenValidity,
+    noteFinder,
+    async (req, res) => {
+        const user = await User.findByPk(req.decodedToken.id);
+        const note = req.note;
+        if (note) {
+            if (!user || note.userId !== user.id) {
+                return res.status(401).end();
+            }
+            await req.note.destroy();
+            return res.status(204).end();
         }
-        await req.note.destroy();
-        return res.status(204).end();
+        return res.status(404).end();
     }
-    return res.status(404).end();
-});
+);
 
-router.put("/:id", tokenExtractor, noteFinder, async (req, res) => {
-    const user = await User.findByPk(req.decodedToken.id);
-    const note = req.note;
-    if (note) {
-        if (req.body.important == undefined) {
-            throw new ValidationError();
+router.put(
+    "/:id",
+    tokenExtractor,
+    checkTokenValidity,
+    noteFinder,
+    async (req, res) => {
+        const user = await User.findByPk(req.decodedToken.id);
+        const note = req.note;
+        if (note) {
+            if (req.body.important == undefined) {
+                throw new ValidationError();
+            }
+            if (!user || note.userId !== user.id) {
+                return res.status(401).end();
+            }
+            note.important = req.body.important;
+            const savedNote = await note.save();
+            return res.json(savedNote);
         }
-        if (!user || note.userId !== user.id) {
-            return res.status(401).end();
-        }
-        note.important = req.body.important;
-        const savedNote = await note.save();
-        return res.json(savedNote);
+        return res.status(404).end();
     }
-    return res.status(404).end();
-});
+);
 
 module.exports = router;

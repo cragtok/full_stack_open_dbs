@@ -3,6 +3,7 @@ const router = require("express").Router();
 
 const { SECRET } = require("../util/config");
 const User = require("../models/user");
+const Session = require("../models/session");
 
 router.post("/", async (request, response) => {
     const body = request.body;
@@ -32,7 +33,19 @@ router.post("/", async (request, response) => {
         id: user.id,
     };
 
-    const token = jwt.sign(userForToken, SECRET);
+    let token = jwt.sign(userForToken, SECRET);
+
+    const existingSession = await Session.findOne({
+        where: { userId: user.id },
+    });
+    if (!existingSession) {
+        await Session.create({
+            token,
+            userId: user.id,
+        });
+    } else {
+        token = existingSession.token;
+    }
 
     response
         .status(200)
